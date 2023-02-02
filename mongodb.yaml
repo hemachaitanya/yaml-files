@@ -1,0 +1,60 @@
+- name: install mongodb 
+  hosts: all
+  become: yes
+  tasks: 
+    - name: mongodb 
+      ansible.builtin.apt: 
+        name: 
+          - wget 
+          - curl
+          - gnupg2 
+          - software-properties-common  
+          - apt-transport-https  
+          - ca-certificates  
+          - lsb-release
+        state: latest
+        update_cache : true
+    - name: apt key 
+      ansible.builtin.apt_key: 
+        url:  https://www.mongodb.org/static/pgp/server-6.0.asc
+        keyring: /etc/apt/trusted.gpg.d/mongodb-6.gpg
+        state: present
+    - name: add repository
+      ansible.builtin.apt_repository:
+        repo: "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/6.0 multiverse"
+        filename: /etc/apt/sources.list.d/mongodb-org-6.0.list
+        state: present
+        mode: '777'
+    - name: url 
+      ansible.builtin.get_url:
+        url:  http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.16_amd64.deb
+        dest: /tmp 
+    - name: dpkg packages  
+      ansible.builtin.dpkg_selections:
+        name: libssl1.1_1.1.1f-1ubuntu2.16_amd64.deb
+        selection: "install"
+    - name: install mongodb-org
+      ansible.builtin.apt: 
+        name: mongodb-org
+        state: latest
+        update_cache : true
+    - name: start the service 
+      ansible.builtin.systemd:
+        name: mongod.service 
+        daemon_reload: true
+        enabled: true
+        state: "restarted"
+    - name: add user
+      community.mongodb.mongodb_user:
+        database: krishna 
+        name: reddy 
+        password: teju1811
+    - name: add database 
+      community.mongodb.mongodb_shell:
+         login_user: reddy
+         login_password: teju1811
+         db: krishna
+         eval: "db.people.insertOne({ name: { first: 'krishna', last: 'reddy' }, views : Long(1250000) })"
+
+
+

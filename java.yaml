@@ -1,0 +1,27 @@
+- name: install java 11,13,17 on ubuntu
+  hosts: all
+  become: yes
+  vars:
+    java_version: "11"
+  tasks: 
+    - name: install java
+      ansible.builtin.apt: 
+        name: openjdk-"{{ java_version }}"-jdk
+        state: latest
+        update_cache : true
+--- 
+
+- name: install java 11,13,17 on ubuntu
+  hosts: all
+  become: yes
+  vars:
+    java_version: "openjdk-17-jdk"
+  tasks: 
+    - name: install java
+      ansible.builtin.apt: 
+        name: "{{ java_version }}"
+        state: latest
+        update_cache : true
+---
+
+

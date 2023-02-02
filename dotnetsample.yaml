@@ -1,0 +1,12 @@
+- name: install dotnet 7.0 server on ubuntu
+  hosts: all
+  become: yes
+  vars:
+   # dotnet_version: "dotnet-sdk"
+   # dotnet1_version: "dotnet-host"
+  tasks: 
+    - name: install dotnet 7.0
+      community.general.snap: 
+        name: dotnet-sdk 
+        state: latest
+        update_cache : true

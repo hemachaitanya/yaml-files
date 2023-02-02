@@ -1,0 +1,27 @@
+- name: install apache server on centos
+  hosts: all
+  become: yes
+  tasks: 
+    - name: install apache2
+      ansible.builtin.dnf: 
+        name: httpd
+        state: latest
+        update_cache : true
+    - name: install php
+      ansible.builtin.dnf:
+        name:  
+          - php
+          - php-mysqlnd
+        state: latest
+        update_cache: true 
+    - name: copy the file
+      ansible.builtin.copy:
+        dest: /var/www/html/info.php
+        content: 
+          - <?php phpinfo(); ?>
+        remote_src: true
+    - name: start the service
+      ansible.builtin.systemd:
+        name: httpd
+        enabled: true
+        state: started 

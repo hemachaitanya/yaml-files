@@ -1,0 +1,42 @@
+- name: installing haproxy
+  hosts: all
+  become: yes
+  tasks:
+    - name: install haproxy
+      ansible.builtin.apt:
+        name: haproxy
+        state: present
+        update_cache: yes
+      when:
+        - ansible_facts['hostname'] == "ip-172-31-0-195"
+    - name: install apache2
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: yes
+      when:
+        - ansible_facts['hostname'] == "ip-172-31-0-254"
+    - name: install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      when:
+        - ansible_facts['hostname'] == "ip-172-31-0-97"
+    - name: file 
+      ansible.builtin.file:
+        path: /etc/haproxy/haproxy.cfg
+        state: touch
+        recurse: true
+    - name: copy the file
+      ansible.builtin.copy:
+        dest: /etc/haproxy/haproxy.cfg
+        content: 
+          - frontend example_front_end
+              bind *:80
+              option forwardfor  
+              default_backend web_servers    
+          - backend web_servers
+              balance roundrobin
+              server server-1 10.0.0.11:80 check
+              server server-2 10.0.0.12:80 check 

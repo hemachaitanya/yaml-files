@@ -1,0 +1,35 @@
+- name: install java13 in centos
+  hosts: all
+  become: yes
+  tasks:
+    - name: wget the file
+      ansible.builtin.get_url:
+        dest: /tmp/
+        url: https://download.java.net/java/GA/jdk13.0.2/d4173c853231432d94f001e99d882ca7/8/GPL/openjdk-13.0.2_linux-x64_bin.tar.gz
+        mode: '777'
+    - name: make directory
+      ansible.builtin.file:
+        path: /opt
+        state: directory
+    - name: copy the file
+      ansible.builtin.copy:
+        dest: /opt
+        src: /tmp
+        remote_src: true
+        mode: '777'
+    - name: extarct url
+      ansible.builtin.unarchive:
+        src: /tmp/openjdk-13.0.2_linux-x64_bin.tar.gz
+        remote_src: yes
+        dest: /opt/
+        mode: '777'
+    - name: edit the data in ~/.bashrc
+      ansible.builtin.blockinfile:
+        block: |
+          # Java 13
+          export JAVA_HOME=/opt/jdk-13.0.2
+          export PATH=$PATH:$JAVA_HOME/bin
+        path: ~/.bashrc
+    - name: print java home
+      ansible.builtin.debug:
+        msg:  "echo $JAVA_HOME"

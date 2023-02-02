@@ -1,0 +1,50 @@
+---
+- name: installing haproxy
+  hosts: all
+  become: yes
+  tasks:
+    - name: insatll haproxy
+      ansible.builtin.apt:
+        name: haproxy
+        state: present
+        update_cache: yes
+      when: ansible_facts['host_private_ip'] == "172.31.0.235"
+    - name: insatll apache2
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: yes
+    - name: insatll haproxy
+      ansible.builtin.apt:
+        name: nginx
+        state: present
+        update_cache: yes
+    - name: copy the file
+      ansible.builtin.copy:
+        dest: /etc/haproxy/haproxy.cfg
+        content: 
+          - frontend example_front_end
+              bind *:80
+              option forwardfor  
+              default_backend web_servers    
+          - backend web_servers
+              balance roundrobin
+              server server-1 10.0.0.11:80 check
+              server server-2 10.0.0.12:80 check 
+        remote_src: true
+    - name: start the service
+      ansible.builtin.systemd:
+        name: apache2
+        enabled: true
+        state: restarted 
+    - name: start the service
+      ansible.builtin.systemd:
+        name: nginx
+        enabled: true
+        state: restarted 
+    - name: start the service
+      ansible.builtin.systemd:
+        name: haproxy
+        enabled: true
+        state: restarted 
+    
