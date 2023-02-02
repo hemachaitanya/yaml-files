@@ -33,3 +33,4 @@
     - name: print java home
       ansible.builtin.debug:
         msg:  "echo $JAVA_HOME"
+        
