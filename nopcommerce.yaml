@@ -1,0 +1,136 @@
+- name: install Nopcommerce
+  hosts: all
+  become: yes
+  tasks:
+    - name: extract microsoft package
+      ansible.builtin.get_url:
+        dest: /tmp
+        url: https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb
+        mode: '777'
+    - name: package
+      ansible.builtin.apt:
+        deb: /tmp/packages-microsoft-prod.deb
+        state: "present"
+    - name: install dotnet-sdk-7.0
+      ansible.builtin.apt:
+        name: dotnet-sdk-7.0
+        state: latest
+        update_cache : true
+    - name: install  aspnetcore-runtime-7.0
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - aspnetcore-runtime-7.0
+          - unzip
+        state: latest
+        update_cache : true
+    - name: install nginx
+      ansible.builtin.apt:
+        name: nginx
+        state: latest
+        update_cache : true
+    - name: start the service nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: "started"
+        enabled: true
+    - name: copy the configure file
+      ansible.builtin.copy:
+        dest: /etc/nginx/sites-available/default
+        content: |
+          # Default server configuration
+          #
+          server {
+              listen 80 default_server;
+              listen [::]:80 default_server;
+
+              server_name   nopCommerce.com;
+
+              location / {
+              proxy_pass         http://localhost:5000;
+              proxy_http_version 1.1;
+              proxy_set_header   Upgrade $http_upgrade;
+              proxy_set_header   Connection keep-alive;
+              proxy_set_header   Host $host;
+              proxy_cache_bypass $http_upgrade;
+              proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header   X-Forwarded-Proto $scheme;
+              }
+              }
+        mode: '777'
+    - name: create folder
+      ansible.builtin.file:
+        path: /var/www/nopCommerce
+        state: "directory"
+        mode: '777'
+   # - name: change directory
+    #  ansible.builtin.command: cd /var/www/nopCommerce
+    - name: install Nopcommerce
+      ansible.builtin.get_url:
+        url: https://github.com/nopSolutions/nopCommerce/releases/download/release-4.60.2/nopCommerce_4.60.2_NoSource_linux_x64.zip
+        dest: /var/www/nopCommerce/
+    - name: extract the file
+      ansible.builtin.unarchive:
+        src: /var/www/nopCommerce/nopCommerce_4.60.2_NoSource_linux_x64.zip
+        remote_src: true
+        dest: /var/www/nopCommerce
+        mode: '777'
+    - name: create folder
+      ansible.builtin.file:
+        path: /var/www/nopCommerce/bin
+        state: "directory"
+        mode: '777'
+    - name: create folder
+      ansible.builtin.file:
+        path: /var/www/nopCommerce/logs
+        state: "directory"
+        mode: '777'
+          # - name: change directory
+          # ansible.builtin.shell: cd ..
+    - name: change
+      ansible.builtin.shell: cd ..
+    - name: group
+      ansible.builtin.shell: sudo chgrp -R www-data nopCommerce
+    - name: owner
+      ansible.builtin.shell: sudo chown -R www-data nopCommerce
+        # - name: change ownership
+        #ansible.builtin.file:
+        #owner: www-data
+        #group: www-data
+        #path: /nopCommerce
+        #recurse: true
+        #mode: '777'
+        #state: "directory"
+    - name: copy the configure file
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/nopCommerce.service
+        content: |
+          [Unit]
+          Description=Example nopCommerce app running on Xubuntu
+
+          [Service]
+          WorkingDirectory=/var/www/nopCommerce
+          ExecStart=/usr/bin/dotnet /var/www/nopCommerce/Nop.Web.dll
+          Restart=always
+          # Restart service after 10 seconds if the dotnet service crashes:
+          RestartSec=10
+          KillSignal=SIGINT
+          SyslogIdentifier=nopCommerce-example
+          User=www-data
+          Environment=ASPNETCORE_ENVIRONMENT=Production
+          Environment=DOTNET_PRINT_TELEMETRY_MESSAGE=false
+
+          [Install]
+          WantedBy=multi-user.target
+        mode: '777'
+    - name: start the service nopCommerce.service
+      ansible.builtin.systemd:
+        name: nopCommerce.service
+        state: "started"
+        enabled: true
+    - name: start the service nginx
+      ansible.builtin.systemd:
+        name: nginx.service
+        state: "restarted"
+        enabled: true
+        daemon_reload: true

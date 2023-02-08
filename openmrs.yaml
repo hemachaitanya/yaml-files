@@ -1,0 +1,28 @@
+- name: install OPEN-MRS on ubuntu
+  hosts: all
+  become: yes
+  tasks:
+    - name: install java
+      ansible.builtin.apt:
+        name: openjdk-11-jdk
+        state: latest
+        update_cache : true
+    - name: install maven
+      ansible.builtin.apt:
+        name: maven
+        state: latest
+    - name: git clone
+      ansible.builtin.get_url:
+        url: https://github.com/openmrs/openmrs-core.git
+        dest: /tmp
+        mode: '777'
+    - name: create directory
+      ansible.builtin.file:
+        path: /openmrs
+        state: directory
+        mode: '777'
+
+          #- name: command in line
+          #ansible.builtin.command:
+          #chdir: /tmp/openmrs-core
+          # cmd: "maven clean package"
